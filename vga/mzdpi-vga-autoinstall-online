@@ -1,5 +1,7 @@
 #!/bin/sh
 
+SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property"
+
 do_dts_dtb() {
 # now create dts file
 cat <<\EOF > /boot/overlays/mzdpi.dts && 
@@ -55,7 +57,8 @@ cat <<\EOF > /boot/overlays/mzdpi.dts &&
 	};
 };
 EOF
-dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
+
+dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
 }
 
 do_create_conf() {
@@ -73,224 +76,229 @@ Section "InputClass"
 EndSection
 
 EOF
-
 }
 
-apt update
-apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
+patchDTB() {
+if [ -f "/boot/${1}" ]; then
+	echo "Patching ${2}: ${1}..."
+	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts /boot/${1}
+
+	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+			echo "\n${2}";
+			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+			[ ! -f "temp/${1}.bak" ] && cp /boot/${1} temp/${1}.bak
+			dtc $1 -I dts -O dtb -o /boot/${1} temp/temp.dts
+			rm temp/temp.dts
+		fi
+	fi
+fi
+}
+
+#apt update
+#apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
 
 if [ -f "/usr/share/X11/xorg.conf.d/40-libinput.conf" ]; then
 	mv /usr/share/X11/xorg.conf.d/40-libinput.conf /usr/share/X11/xorg.conf.d/40-libinput.bak
 fi
 
-DTBFILE=/boot/bcm2708-rpi-0-w.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
-			echo "\nZERO-W";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
-			if [ ! -f temp/bcm2708-rpi-0-w.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-0-w.dtb temp/bcm2708-rpi-0-w.dtb.bak
-			fi
-			dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-	# rm temp/temp.dts
-fi
+# DTBFILE=bcm2708-rpi-0-w.dtb
+# patchDTB $DTBFILE 
+# if [ -f "/boot/${BASEFILENAME}" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts /boot/${BASEFILENAME}
+
+# 	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
+# 			echo "\nZERO-W";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
+# 			[ ! -f "temp/bcm2708-rpi-0-w.dtb.bak" ] && cp /boot/${BASEFILENAME} temp/${BASEFILENAME}.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/${BASEFILENAME} temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
 
-DTBFILE=/boot/bcm2708-rpi-0.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# DTBFILE=/boot/bcm2708-rpi-0.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
-			echo "\nZERO";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
-			if [ ! -f temp/bcm2708-rpi-0.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-0.dtb temp/bcm2708-rpi-0.dtb.bak
-			fi
-			dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# 	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
+# 			echo "\nZERO";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
+# 			[ ! -f "temp/bcm2708-rpi-0.dtb.bak" ] && cp /boot/bcm2708-rpi-0.dtb temp/bcm2708-rpi-0.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-DTBFILE=/boot/bcm2708-rpi-zero-w.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+patchDTB "bcm2708-rpi-zero-w.dtb" "ZERO-W"
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\nZERO-W";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2708-rpi-zero-w.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-zero-w.dtb temp/bcm2708-rpi-zero-w.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-phys_property -W no-mboxes_property -W no-power_domains_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2708-rpi-zero-w.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2708-rpi-zero.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\nZERO-W";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2708-rpi-zero-w.dtb.bak" ] && cp /boot/bcm2708-rpi-zero-w.dtb temp/bcm2708-rpi-zero-w.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\nZERO";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2708-rpi-zero.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-zero.dtb temp/bcm2708-rpi-zero.dtb.bak
-			fi
-			dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2708-rpi-zero.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2708-rpi-b-plus.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\nZERO";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2708-rpi-zero.dtb.bak" ] && cp /boot/bcm2708-rpi-zero.dtb temp/bcm2708-rpi-zero.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\n1B+";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2708-rpi-b-plus.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-b-plus.dtb temp/bcm2708-rpi-b-plus.dtb.bak
-			fi
-			dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2708-rpi-b-plus.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2708-rpi-cm.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\n1B+";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2708-rpi-b-plus.dtb.bak" ] && cp /boot/bcm2708-rpi-b-plus.dtb temp/bcm2708-rpi-b-plus.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\nCM";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2708-rpi-cm.dtb.bak ]; then
-				cp /boot/bcm2708-rpi-cm.dtb temp/bcm2708-rpi-cm.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2708-rpi-cm.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2709-rpi-2-b.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\nCM";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2708-rpi-cm.dtb.bak" ] && cp /boot/bcm2708-rpi-cm.dtb temp/bcm2708-rpi-cm.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\n2B";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2709-rpi-2-b.dtb.bak ]; then
-				cp /boot/bcm2709-rpi-2-b.dtb temp/bcm2709-rpi-2-b.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2709-rpi-2-b.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2710-rpi-3-b.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\n2B";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2709-rpi-2-b.dtb.bak" ] && cp /boot/bcm2709-rpi-2-b.dtb temp/bcm2709-rpi-2-b.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\n3B";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2710-rpi-3-b.dtb.bak ]; then
-				cp /boot/bcm2710-rpi-3-b.dtb temp/bcm2710-rpi-3-b.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2710-rpi-3-b.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2710-rpi-3-b-plus.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\n3B";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2710-rpi-3-b.dtb.bak" ] && cp /boot/bcm2710-rpi-3-b.dtb temp/bcm2710-rpi-3-b.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\n3B+";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2710-rpi-3-b-plus.dtb.bak ]; then
-				cp /boot/bcm2710-rpi-3-b-plus.dtb temp/bcm2710-rpi-3-b-plus.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2710-rpi-3-b-plus.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
 
-DTBFILE=/boot/bcm2710-rpi-cm3.dtb
-if [ -f "$DTBFILE" ]; then
-	dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dtb -O dts -o temp/temp.dts $DTBFILE
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\n3B+";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2710-rpi-3-b-plus.dtb.bak" ]; && cp /boot/bcm2710-rpi-3-b-plus.dtb temp/bcm2710-rpi-3-b-plus.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-			echo "\nCM3";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			if [ ! -f temp/bcm2710-rpi-cm3.dtb.bak ]; then
-				cp /boot/bcm2710-rpi-cm3.dtb temp/bcm2710-rpi-cm3.dtb.bak
-			fi
-			dtc -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o $DTBFILE temp/temp.dts
-		fi
-	fi
-fi
+# DTBFILE=/boot/bcm2710-rpi-cm3.dtb
+# if [ -f "$DTBFILE" ]; then
+# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
+
+# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
+# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+# 			echo "\nPatching CM3";
+# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+# 			[ ! -f "temp/bcm2710-rpi-cm3.dtb.bak" ] && cp /boot/bcm2710-rpi-cm3.dtb temp/bcm2710-rpi-cm3.dtb.bak
+# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
+# 		fi
+# 	fi
+# 	rm temp/temp.dts
+# fi
 
 do_create_conf
 do_dts_dtb
 
 cp /etc/rc.local temp/rc.local
-if [ ! -f temp/rc.local ]; then
-	cp temp/rc.local temp/rc.bak
-fi
+[ ! -f "temp/rc.local.bak" ] && cp temp/rc.local temp/rc.local.bak
 sed -i "/sudo raspi-gpio set 7-8 a2/d" temp/rc.local
 sed -i "/exit 0/d" temp/rc.local
 echo "sudo raspi-gpio set 7-8 a2" >> temp/rc.local
 echo "exit 0" >> temp/rc.local
 cp temp/rc.local /etc/rc.local
 
-cp /boot/config.txt /temp/config.txt
-if [ ! -f temp/config.bak ]; then
-	cp temp/config.txt temp/config.bak
-fi
-sed -i "/gpio=18=/d" /temp/config.txt
-sed -i "/gpio=7-8=/d" /temp/config.txt
-sed -i "/dtparam=spi=/d" /temp/config.txt
-sed -i "/dtoverlay=ads7846/d" /temp/config.txt
-sed -i "/display_rotate=/d" /temp/config.txt
-sed -i "/dtoverlay=mzdpi/d" /temp/config.txt
-sed -i "/framebuffer_width=/d" /temp/config.txt
-sed -i "/framebuffer_height=/d" /temp/config.txt
-sed -i "/enable_dpi_lcd=/d" /temp/config.txt
-sed -i "/display_default_lcd=/d" /temp/config.txt
-sed -i "/dpi_group=/d" /temp/config.txt
-sed -i "/dpi_mode=/d" /temp/config.txt
-sed -i "/dpi_output_format=/d" /temp/config.txt
-sed -i "/hdmi_timings=/d" /temp/config.txt
+cp /boot/config.txt temp/config.txt
+[ ! -f "temp/config.txt.bak" ] && cp temp/config.txt temp/config.txt.bak
+sed -i "/gpio=18=/d" temp/config.txt
+sed -i "/gpio=7-8=/d" temp/config.txt
+sed -i "/dtparam=spi=/d" temp/config.txt
+sed -i "/dtoverlay=ads7846/d" temp/config.txt
+sed -i "/display_rotate=/d" temp/config.txt
+sed -i "/dtoverlay=mzdpi/d" temp/config.txt
+sed -i "/framebuffer_width=/d" temp/config.txt
+sed -i "/framebuffer_height=/d" temp/config.txt
+sed -i "/enable_dpi_lcd=/d" temp/config.txt
+sed -i "/display_default_lcd=/d" temp/config.txt
+sed -i "/dpi_group=/d" temp/config.txt
+sed -i "/dpi_mode=/d" temp/config.txt
+sed -i "/dpi_output_format=/d" temp/config.txt
+sed -i "/hdmi_timings=/d" temp/config.txt
 
-echo "gpio=18=op,dh" >> /temp/config.txt
-echo "gpio=7-8=a2" >> /temp/config.txt
-echo "dtparam=spi=on" >> /temp/config.txt
-echo "dtoverlay=ads7846,penirq=27,swapxy=1,xmin=200,xmax=3850,ymin=200,ymax=3850" >> /temp/config.txt
-echo "display_rotate=3" >> /temp/config.txt
-echo "dtoverlay=mzdpi" >> /temp/config.txt
-echo "framebuffer_width=640" >> /temp/config.txt
-echo "framebuffer_height=480" >> /temp/config.txt
-echo "enable_dpi_lcd=1" >> /temp/config.txt
-echo "display_default_lcd=1" >> /temp/config.txt
-echo "dpi_group=2" >> /temp/config.txt
-echo "dpi_mode=87" >> /temp/config.txt
-echo "dpi_output_format=0x07f003" >> /temp/config.txt
-echo "hdmi_timings=480 0 41 20 60 640 0 5 10 10 0 0 0 60 0 32000000 1" >> /temp/config.txt
+echo "gpio=18=op,dh" >> temp/config.txt
+echo "gpio=7-8=a2" >> temp/config.txt
+echo "dtparam=spi=on" >> temp/config.txt
+echo "dtoverlay=ads7846,penirq=27,swapxy=1,xmin=200,xmax=3850,ymin=200,ymax=3850" >> temp/config.txt
+echo "display_rotate=3" >> temp/config.txt
+echo "dtoverlay=mzdpi" >> temp/config.txt
+echo "framebuffer_width=640" >> temp/config.txt
+echo "framebuffer_height=480" >> temp/config.txt
+echo "enable_dpi_lcd=1" >> temp/config.txt
+echo "display_default_lcd=1" >> temp/config.txt
+echo "dpi_group=2" >> temp/config.txt
+echo "dpi_mode=87" >> temp/config.txt
+echo "dpi_output_format=0x07f003" >> temp/config.txt
+echo "hdmi_timings=480 0 41 20 60 640 0 5 10 10 0 0 0 60 0 32000000 1" >> temp/config.txt
 
-cp /temp/config.txt /boot/config.txt
+cp temp/config.txt /boot/config.txt
 echo "You should now reboot 👍"
