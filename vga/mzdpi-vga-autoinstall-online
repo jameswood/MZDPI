@@ -100,9 +100,9 @@ if [ -f "/boot/${1}.dtb" ]; then
 fi
 }
 
-#apt update
-#apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
-#apt install device-tree-compiler -y
+# apt update
+# apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
+# apt install device-tree-compiler -y
 
 mkdir -p backup temp output
 
@@ -118,7 +118,7 @@ patchDTB "bcm2710-rpi-3-b-plus" "3B+"
 patchDTB "bcm2710-rpi-cm3"      "CM3"
 
 configure_touchscreen
-do_dts_dtb
+generate_overlay
 
 [ ! -f "temp/rc.local.bak" ] && cp /etc/rc.local backup/rc.local
 cp /etc/rc.local temp/rc.local
