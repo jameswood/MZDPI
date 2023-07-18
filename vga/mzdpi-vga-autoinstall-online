@@ -4,7 +4,7 @@ SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_
 
 do_dts_dtb() {
 # now create dts file
-/boot/overlays/mzdpi.dts <<EOF
+cat <<EOF > /boot/overlays/mzdpi.dts
 /dts-v1/;
 
 / {
@@ -64,8 +64,8 @@ dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays
 
 do_create_conf() {
 [ -f "/etc/X11/xorg.conf.d/99-calibration.conf" ] && return
-mkdir /etc/X11/xorg.conf.d
-/etc/X11/xorg.conf.d/99-calibration.conf <<EOF
+mkdir /etc/X11/xorg.conf.d/ -p
+cat <<EOF > /etc/X11/xorg.conf.d/99-calibration.conf
 Section "InputClass"
 	Identifier	"calibration"
 	MatchProduct	"ADS7846 Touchscreen"
