@@ -4,7 +4,7 @@ SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_
 
 do_dts_dtb() {
 # now create dts file
-cat <<\EOF > /boot/overlays/mzdpi.dts && 
+/boot/overlays/mzdpi.dts <<EOF
 /dts-v1/;
 
 / {
@@ -61,22 +61,20 @@ EOF
 dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
 }
 
-do_create_conf() {
-if [ -f "/etc/X11/xorg.conf.d/99-calibration.conf" ]; then
-	return
-fi
 
+do_create_conf() {
+[ -f "/etc/X11/xorg.conf.d/99-calibration.conf" ] && return
 mkdir /etc/X11/xorg.conf.d
-cat <<EOF > /etc/X11/xorg.conf.d/99-calibration.conf 
+/etc/X11/xorg.conf.d/99-calibration.conf <<EOF
 Section "InputClass"
 	Identifier	"calibration"
 	MatchProduct	"ADS7846 Touchscreen"
 	Option	"Calibration"	"195 3895 240 3813"
 	Option	"SwapAxes"	"0"
 EndSection
-
 EOF
 }
+
 
 patchDTB() {
 if [ -f "/boot/${1}" ]; then
@@ -98,164 +96,16 @@ fi
 #apt update
 #apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
 
-if [ -f "/usr/share/X11/xorg.conf.d/40-libinput.conf" ]; then
-	mv /usr/share/X11/xorg.conf.d/40-libinput.conf /usr/share/X11/xorg.conf.d/40-libinput.bak
-fi
-
-
-# DTBFILE=bcm2708-rpi-0-w.dtb
-# patchDTB $DTBFILE 
-# if [ -f "/boot/${BASEFILENAME}" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts /boot/${BASEFILENAME}
-
-# 	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
-# 			echo "\nZERO-W";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
-# 			[ ! -f "temp/bcm2708-rpi-0-w.dtb.bak" ] && cp /boot/${BASEFILENAME} temp/${BASEFILENAME}.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/${BASEFILENAME} temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-
-# DTBFILE=/boot/bcm2708-rpi-0.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x8 0x7>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x1>;" temp/temp.dts; then
-# 			echo "\nZERO";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x1>;/brcm,function = <0x6>;/"
-# 			[ ! -f "temp/bcm2708-rpi-0.dtb.bak" ] && cp /boot/bcm2708-rpi-0.dtb temp/bcm2708-rpi-0.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-patchDTB "bcm2708-rpi-zero-w.dtb" "ZERO-W"
-
-# DTBFILE=/boot/bcm2708-rpi-zero-w.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\nZERO-W";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2708-rpi-zero-w.dtb.bak" ] && cp /boot/bcm2708-rpi-zero-w.dtb temp/bcm2708-rpi-zero-w.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2708-rpi-zero.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\nZERO";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2708-rpi-zero.dtb.bak" ] && cp /boot/bcm2708-rpi-zero.dtb temp/bcm2708-rpi-zero.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2708-rpi-b-plus.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\n1B+";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2708-rpi-b-plus.dtb.bak" ] && cp /boot/bcm2708-rpi-b-plus.dtb temp/bcm2708-rpi-b-plus.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2708-rpi-cm.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\nCM";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2708-rpi-cm.dtb.bak" ] && cp /boot/bcm2708-rpi-cm.dtb temp/bcm2708-rpi-cm.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2709-rpi-2-b.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\n2B";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2709-rpi-2-b.dtb.bak" ] && cp /boot/bcm2709-rpi-2-b.dtb temp/bcm2709-rpi-2-b.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2710-rpi-3-b.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\n3B";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2710-rpi-3-b.dtb.bak" ] && cp /boot/bcm2710-rpi-3-b.dtb temp/bcm2710-rpi-3-b.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2710-rpi-3-b-plus.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\n3B+";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2710-rpi-3-b-plus.dtb.bak" ]; && cp /boot/bcm2710-rpi-3-b-plus.dtb temp/bcm2710-rpi-3-b-plus.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
-
-# DTBFILE=/boot/bcm2710-rpi-cm3.dtb
-# if [ -f "$DTBFILE" ]; then
-# 	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts $DTBFILE
-
-# 	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-# 		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
-# 			echo "\nPatching CM3";
-# 			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-# 			[ ! -f "temp/bcm2710-rpi-cm3.dtb.bak" ] && cp /boot/bcm2710-rpi-cm3.dtb temp/bcm2710-rpi-cm3.dtb.bak
-# 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o $DTBFILE temp/temp.dts
-# 		fi
-# 	fi
-# 	rm temp/temp.dts
-# fi
+patchDTB "bcm2708-rpi-0-w.dtb"      "ZERO-W"
+patchDTB "bcm2708-rpi-0.dtb"        "ZERO"
+patchDTB "bcm2708-rpi-zero-w.dtb"   "ZERO-W"
+patchDTB "bcm2708-rpi-zero.dtb"     "ZERO"
+patchDTB "bcm2708-rpi-b-plus.dtb"   "1B+"
+patchDTB "bcm2708-rpi-cm.dtb"       "CM"
+patchDTB "bcm2709-rpi-2-b.dtb"      "2B"
+patchDTB "bcm2710-rpi-3-b.dtb"      "3B"
+patchDTB "bcm2710-rpi-3-b-plus.dtb" "3B+"
+patchDTB "bcm2710-rpi-cm3.dtb"      "CM3"
 
 do_create_conf
 do_dts_dtb
