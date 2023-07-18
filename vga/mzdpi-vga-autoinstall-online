@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property"
+SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-simple_bus_reg"
 
 do_dts_dtb() {
 # now create dts file
