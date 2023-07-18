@@ -79,15 +79,14 @@ EOF
 patchDTB() {
 if [ -f "/boot/${1}" ]; then
 	echo "Patching ${2}: ${1}..."
-	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/temp.dts /boot/${1}
+	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o temp/${1}.dts /boot/${1}.dtb
 
-	if grep -q "brcm,pins = <0x08 0x07>;" temp/temp.dts; then
-		if grep -q "brcm,function = <0x01>;" temp/temp.dts; then
+	if grep -q "brcm,pins = <0x08 0x07>;" temp/${1}.dts; then
+		if grep -q "brcm,function = <0x01>;" temp/${1}.dts; then
 			echo "\n${2}";
-			sed temp/temp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			[ ! -f "temp/${1}.bak" ] && cp /boot/${1} temp/${1}.bak
-			dtc $1 -I dts -O dtb -o /boot/${1} temp/temp.dts
-			rm temp/temp.dts
+			sed temp/${1}.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+			[ ! -f "temp/${1}.bak" ] && cp /boot/${1}.dtb temp/${1}.dtb.bak
+			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/${1}.dtb temp/${1}.dts
 		fi
 	fi
 fi
