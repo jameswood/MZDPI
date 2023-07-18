@@ -13,7 +13,6 @@ cat <<\EOF > temp/mzdpi.dts &&
 
 		__overlay__ {
 			pinctrl-names = "default";
-			# pinctrl-0 = < 0x01 >;
 			pinctrl-0 = < 0x00 >;
 		};
 	};
@@ -49,15 +48,6 @@ cat <<\EOF > temp/mzdpi.dts &&
 		vc4 = "/fragment@1:target:0";
 		gpio = "/fragment@2:target:0";
 	};
-
-	# __local_fixups__ {
-
-	# 	fragment@0 {
-	# 		__overlay__ {
-	# 			pinctrl-0 = < 0x00 >;
-	# 		};
-	# 	};
-	# };
 };
 EOF
 dtc -I dts -O dtb -o /boot/overlays/mzdpi.dtbo temp/mzdpi.dts
@@ -83,7 +73,7 @@ EOF
 }
 
 mkdir temp
-apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
+# apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
 
 if [ -f "/usr/share/X11/xorg.conf.d/40-libinput.conf" ];then
 	mv /usr/share/X11/xorg.conf.d/40-libinput.conf /usr/share/X11/xorg.conf.d/40-libinput.bak
@@ -124,11 +114,11 @@ if [ -f "$DTBFILE" ];then
 	# dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-simple_bus_reg -I dtb -O dts -o temp/tmp.dts $DTBFILE
 	dtc -I dtb -O dts -o temp/tmp.dts $DTBFILE
 
-	if grep -q "brcm,pins = < 0x08 0x07 >;" temp/tmp.dts; then
-		if grep -q "brcm,function = < 0x01 >;" temp/tmp.dts; then
+	if grep -q "brcm,pins = <0x08 0x07>;" temp/tmp.dts; then
+		if grep -q "brcm,function = <0x01>;" temp/tmp.dts; then
 			echo "\nZERO-W";
-			sed temp/tmp.dts -i -e "s/brcm,function = < 0x01 >;/brcm,function = < 0x06 >;/"
-			cp /boot/bcm2708-rpi-zero-w.dtb /boot/bcm2708-rpi-zero-w.bak
+			sed temp/tmp.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+			cp /boot/bcm2708-rpi-zero-w.dtb temp/bcm2708-rpi-zero-w.bak
 			dtc -I dts -O dtb -o $DTBFILE temp/tmp.dts
 			# dtc -W no-thermal_sensors_property -W no-phys_property -W no-mboxes_property -W no-power_domains_property -W no-dmas_property -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-simple_bus_reg -I dts -O dtb -o $DTBFILE temp/tmp.dts
 		fi
