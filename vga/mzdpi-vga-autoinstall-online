@@ -83,7 +83,7 @@ if [ -f "/boot/${1}" ]; then
 
 	if grep -q "brcm,pins = <0x08 0x07>;" temp/${1}.dts; then
 		if grep -q "brcm,function = <0x01>;" temp/${1}.dts; then
-			echo "\n${2}";
+			echo "${2}";
 			sed temp/${1}.dts -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
 			[ ! -f "temp/${1}.bak" ] && cp /boot/${1}.dtb temp/${1}.dtb.bak
 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/${1}.dtb temp/${1}.dts
@@ -95,16 +95,16 @@ fi
 #apt update
 #apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
 
-patchDTB "bcm2708-rpi-0-w.dtb"      "ZERO-W"
-patchDTB "bcm2708-rpi-0.dtb"        "ZERO"
-patchDTB "bcm2708-rpi-zero-w.dtb"   "ZERO-W"
-patchDTB "bcm2708-rpi-zero.dtb"     "ZERO"
-patchDTB "bcm2708-rpi-b-plus.dtb"   "1B+"
-patchDTB "bcm2708-rpi-cm.dtb"       "CM"
-patchDTB "bcm2709-rpi-2-b.dtb"      "2B"
-patchDTB "bcm2710-rpi-3-b.dtb"      "3B"
-patchDTB "bcm2710-rpi-3-b-plus.dtb" "3B+"
-patchDTB "bcm2710-rpi-cm3.dtb"      "CM3"
+patchDTB "bcm2708-rpi-0-w"      "ZERO-W"
+patchDTB "bcm2708-rpi-0"        "ZERO"
+patchDTB "bcm2708-rpi-zero-w"   "ZERO-W"
+patchDTB "bcm2708-rpi-zero"     "ZERO"
+patchDTB "bcm2708-rpi-b-plus"   "1B+"
+patchDTB "bcm2708-rpi-cm"       "CM"
+patchDTB "bcm2709-rpi-2-b"      "2B"
+patchDTB "bcm2710-rpi-3-b"      "3B"
+patchDTB "bcm2710-rpi-3-b-plus" "3B+"
+patchDTB "bcm2710-rpi-cm3"      "CM3"
 
 do_create_conf
 do_dts_dtb
