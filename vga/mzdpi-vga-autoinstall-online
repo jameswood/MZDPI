@@ -58,7 +58,7 @@ cat <<\EOF > /boot/overlays/mzdpi.dts &&
 	};
 };
 EOF
-dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
+dtc -W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-simple_bus_reg -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
 }
 
 do_create_conf() {
