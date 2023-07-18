@@ -1,10 +1,10 @@
 #!/bin/sh
 
-SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-simple_bus_reg"
+#SUPPRESS_WARNINGS="-W no-gpios_property -W no-clocks_property -W no-unique_unit_address -W no-avoid_unnecessary_addr_size -W no-unit_address_vs_reg -W no-thermal_sensors_property -W no-power_domains_property -W no-phys_property -W no-mboxes_property -W no-dmas_property -W no-simple_bus_reg"
+SUPPRESS_WARNINGS="-@ -Hepapr"
 
-do_dts_dtb() {
-# now create dts file
-cat <<EOF > /boot/overlays/mzdpi.dts
+generate_overlay() {
+cat <<EOF > temp/mzdpi.dts
 /dts-v1/;
 
 / {
@@ -58,14 +58,15 @@ cat <<EOF > /boot/overlays/mzdpi.dts
 };
 EOF
 
-dtc $SUPPRESS_WARNINGS -I dts -O dtb -o /boot/overlays/mzdpi.dtbo /boot/overlays/mzdpi.dts
+dtc $SUPPRESS_WARNINGS -I dts -O dtb -o output/mzdpi.dtbo temp/mzdpi.dts
+# cp output/mzdpi.dtbo /boot/overlays/mzdpi.dtbo
 }
 
 
-do_create_conf() {
+configure_touchscreen() {
 [ -f "/etc/X11/xorg.conf.d/99-calibration.conf" ] && return
 mkdir /etc/X11/xorg.conf.d/ -p
-cat <<EOF > /etc/X11/xorg.conf.d/99-calibration.conf
+cat <<EOF > temp/99-calibration.conf
 Section "InputClass"
 	Identifier	"calibration"
 	MatchProduct	"ADS7846 Touchscreen"
@@ -73,18 +74,26 @@ Section "InputClass"
 	Option	"SwapAxes"	"0"
 EndSection
 EOF
+mv temp/99-calibration.conf output/
+# cp output/99-calibration.conf /etc/X11/xorg.conf.d/99-calibration.conf
 }
 
 
 patchDTB() {
 echo "Patching ${2}: ${1}..."
+SOURCE="/boot/${1}.dtb"
+BACKUP="backup/${1}.dts"
+TEMP="temp/${1}.dts"
+OUTPUT="output${1}.dts"
 if [ -f "/boot/${1}.dtb" ]; then
-	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o "temp/${1}.dts" "/boot/${1}.dtb"
-	if grep -q "brcm,pins = <0x08 0x07>;" "temp/${1}.dts"; then
-		if grep -q "brcm,function = <0x01>;" "temp/${1}.dts"; then
-			sed "temp/${1}.dts" -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
-			[ ! -f "temp/${1}.bak" ] && cp "/boot/${1}.dtb" "temp/${1}.dtb.bak"
-			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o "/boot/${1}.dtb" "temp/${1}.dts"
+	dtc $SUPPRESS_WARNINGS -I dtb -O dts -o "${TEMP}" "${SOURCE}"
+	[ ! -f "${BACKUP}" ] && cp "${TEMP}" "${BACKUP}"
+	if grep -q "brcm,pins = <0x08 0x07>;" "${TEMP}"; then
+		if grep -q "brcm,function = <0x01>;" "${TEMP}"; then
+			grep "brcm,function = <0x01>;" "${TEMP}"
+			sed "${TEMP}" -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o "${OUTPUT}" "${TEMP}"
+			# cp $OUTPUT $SOURCE
 			echo "${2} patched!";
 		fi
 	fi
@@ -93,6 +102,9 @@ fi
 
 #apt update
 #apt install xserver-xorg-input-evdev xinput-calibrator matchbox-keyboard -y
+#apt install device-tree-compiler -y
+
+mkdir -p backup temp output
 
 patchDTB "bcm2708-rpi-0-w"      "ZERO-W"
 patchDTB "bcm2708-rpi-0"        "ZERO"
@@ -105,18 +117,19 @@ patchDTB "bcm2710-rpi-3-b"      "3B"
 patchDTB "bcm2710-rpi-3-b-plus" "3B+"
 patchDTB "bcm2710-rpi-cm3"      "CM3"
 
-do_create_conf
+configure_touchscreen
 do_dts_dtb
 
-[ ! -f "temp/rc.local.bak" ] && cp /etc/rc.local temp/rc.local.bak
+[ ! -f "temp/rc.local.bak" ] && cp /etc/rc.local backup/rc.local
 cp /etc/rc.local temp/rc.local
 sed -i "/sudo raspi-gpio set 7-8 a2/d" temp/rc.local
 sed -i "/exit 0/d" temp/rc.local
 echo "sudo raspi-gpio set 7-8 a2" >> temp/rc.local
 echo "exit 0" >> temp/rc.local
-cp temp/rc.local /etc/rc.local
+mv temp/rc.local output/rc.local
+# cp output/rc.local /etc/rc.local
 
-[ ! -f "temp/config.txt.bak" ] && cp /boot/config.txt temp/config.txt.bak
+[ ! -f "temp/config.txt.bak" ] && cp /boot/config.txt backup/config.txt
 cp /boot/config.txt temp/config.txt
 sed -i "/gpio=18=/d" temp/config.txt
 sed -i "/gpio=7-8=/d" temp/config.txt
@@ -147,6 +160,7 @@ echo "dpi_group=2" >> temp/config.txt
 echo "dpi_mode=87" >> temp/config.txt
 echo "dpi_output_format=0x07f003" >> temp/config.txt
 echo "hdmi_timings=480 0 41 20 60 640 0 5 10 10 0 0 0 60 0 32000000 1" >> temp/config.txt
+mv temp/config.txt output/config.txt
+# cp output/config.txt /boot/config.txt
 
-cp temp/config.txt /boot/config.txt
 echo "You should now reboot 👍"
