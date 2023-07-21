@@ -91,7 +91,7 @@ if [ -f "/boot/${1}.dtb" ]; then
 	if grep -q "brcm,pins = <0x08 0x07>;" "${TEMP}"; then
 		if grep -q "brcm,function = <0x01>;" "${TEMP}"; then
 			grep "brcm,function = <0x01>;" "${TEMP}"
-			sed "${TEMP}" -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
+			# sed "${TEMP}" -i -e "s/brcm,function = <0x01>;/brcm,function = <0x06>;/"
 			dtc $SUPPRESS_WARNINGS -I dts -O dtb -o "${OUTPUT}" "${TEMP}"
 			# cp $OUTPUT $SOURCE
 			echo "${2} patched!";
